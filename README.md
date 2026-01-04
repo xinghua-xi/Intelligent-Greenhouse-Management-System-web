@@ -1,20 +1,154 @@
+# 🌱 智慧温室管理系统 - Web 前端
+
 <div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
+
+![React](https://img.shields.io/badge/React-18.2-61DAFB?logo=react)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.4-3178C6?logo=typescript)
+![Vite](https://img.shields.io/badge/Vite-5.1-646CFF?logo=vite)
+![TailwindCSS](https://img.shields.io/badge/TailwindCSS-3.4-06B6D4?logo=tailwindcss)
+
+智慧农业温室物联网管理平台 Web 端，提供环境监测、设备控制、AI 辅助决策等功能。
+
 </div>
 
-# Run and deploy your AI Studio app
+## ✨ 功能特性
 
-This contains everything you need to run your app locally.
+### 📊 数据驾驶舱 (Dashboard)
+- 环境趋势分析（温度、湿度、光照、CO2）
+- 土壤环境监测（NPK、pH、EC、温度）
+- 土壤历史趋势图表
+- 区域健康度监控
+- 资源液位展示
 
-View your app in AI Studio: https://ai.studio/apps/temp/2
+### 🌡️ 大棚管理 (Greenhouse)
+- 多大棚概览与详情
+- 3D 可视化展示
+- 设备状态监控
 
-## Run Locally
+### 🚜 农事作业中心 (UserOperation)
+- 多区域批量作业控制
+- 灌溉、施肥、通风、控温操作
+- **AI 精准施肥分析** - 基于土壤数据的智能施肥建议
+- 人员任务指派
 
-**Prerequisites:**  Node.js
+### 📅 智能排产 (SmartSchedule)
+- AI 驱动的任务调度
+- 作业计划管理
 
+### 📚 知识库 (KnowledgeBase)
+- 农业技术文章
+- 病虫害防治指南
+- 搜索与分类浏览
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+### 💬 AI 助手 (GlobalChat)
+- 智能问答
+- 语音输入支持
+- 病虫害图像诊断
+
+### 👥 用户系统
+- 登录认证
+- 多角色权限（专家/标准/简约模式）
+
+## 🛠️ 技术栈
+
+- **框架**: React 18 + TypeScript
+- **构建工具**: Vite 5
+- **样式**: TailwindCSS
+- **图表**: Recharts
+- **3D**: Three.js
+- **图标**: Lucide React
+
+## 📦 安装与运行
+
+### 环境要求
+- Node.js >= 18
+- npm 或 yarn
+
+### 安装依赖
+```bash
+npm install
+```
+
+### 配置环境变量
+复制 `.env.example` 为 `.env.local`，配置必要的环境变量。
+
+### 启动开发服务器
+```bash
+npm run dev
+```
+访问 http://localhost:5173
+
+### 构建生产版本
+```bash
+npm run build
+```
+
+## 🔌 后端服务配置
+
+前端通过 Vite 代理连接后端服务：
+
+| 服务 | 端口 | 说明 |
+|------|------|------|
+| API 网关 | 8080 | 主要业务接口 |
+| 数据服务 | 8083 | 土壤数据接口 |
+| AI 模型服务 | 8084 | 施肥分析模型 |
+
+代理配置见 `vite.config.ts`。
+
+## 📁 项目结构
+
+```
+src/
+├── api/                # API 客户端
+│   ├── client.ts       # HTTP 请求封装
+│   ├── types.ts        # TypeScript 类型定义
+│   └── index.ts
+├── components/         # React 组件
+│   ├── Dashboard.tsx   # 数据驾驶舱
+│   ├── Greenhouse.tsx  # 大棚管理
+│   ├── UserOperation.tsx # 农事作业中心
+│   ├── SmartSchedule.tsx # 智能排产
+│   ├── KnowledgeBase.tsx # 知识库
+│   ├── GlobalChat.tsx  # AI 助手
+│   ├── FertilizerAnalysis.tsx # 施肥分析
+│   ├── Sidebar.tsx     # 侧边栏导航
+│   └── Login.tsx       # 登录页
+├── hooks/              # 自定义 Hooks
+│   └── useApi.ts       # API 调用 Hooks
+├── App.tsx             # 应用入口
+├── index.tsx           # 渲染入口
+└── types.ts            # 全局类型
+```
+
+## 🔗 API 接口
+
+### 环境数据
+- `GET /data/environment` - 获取环境数据（温湿度、光照、CO2）
+
+### 土壤数据
+- `GET /api/soil/data` - 获取当前土壤数据
+- `GET /api/soil/history?range=24h` - 获取土壤历史数据
+
+### 设备控制
+- `GET /devices/greenhouses` - 获取大棚列表
+- `GET /devices/nodes` - 获取传感器节点状态
+- `POST /devices/{id}/control` - 设备控制指令
+
+### AI 服务
+- `POST /ai/chat` - 智能问答
+- `POST /vision/diagnosis` - 病虫害诊断
+- `POST /api/fertilizer/analyze` - 施肥分析
+
+### 知识库
+- `GET /ai/articles` - 文章列表
+- `GET /ai/articles/hot` - 热门文章
+- `GET /ai/articles/search?keyword=xxx` - 搜索文章
+
+### 用户认证
+- `POST /auth/login` - 用户登录
+- `GET /auth/users` - 用户列表
+
+## 📄 License
+
+MIT License
+

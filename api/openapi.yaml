@@ -1,0 +1,569 @@
+openapi: 3.0.3
+info:
+  title: 智慧温室 API
+  description: |
+    智慧温室微服务系统 API 文档
+    
+    ## 认证方式
+    所有需要认证的接口请在 Header 中携带：
+    ```
+    Authorization: Bearer <token>
+    ```
+  version: 1.0.0
+  contact:
+    name: 后端团队
+    email: backend@smartgreenhouse.com
+
+servers:
+  - url: http://localhost:8080
+    description: 本地开发环境
+  - url: https://test-api.smartgreenhouse.com
+    description: 测试环境
+  - url: https://api.smartgreenhouse.com
+    description: 生产环境
+
+tags:
+  - name: Auth
+    description: 用户认证
+  - name: Device
+    description: 设备管理
+  - name: Data
+    description: 数据采集
+  - name: AI
+    description: AI 决策
+  - name: Vision
+    description: 图像识别
+
+paths:
+  # ==================== Auth Service ====================
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: 用户登录
+      description: 使用用户名密码登录，获取 JWT Token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+            example:
+              username: "admin"
+              password: "123456"
+      responses:
+        '200':
+          description: 登录成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '401':
+          description: 用户名或密码错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: 401
+                msg: "用户名或密码错误"
+                data: null
+
+  # ==================== Device Service ====================
+  /devices/greenhouses:
+    get:
+      tags: [Device]
+      summary: 获取大棚列表
+      description: 获取所有温室大棚的基本信息
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GreenhouseListResponse'
+
+  /devices/greenhouses/{id}/detail:
+    get:
+      tags: [Device]
+      summary: 获取大棚详情
+      description: 获取指定大棚的详细信息，包含分区和设备状态（用于 3D 数字孪生）
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "gh_001"
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GreenhouseDetailResponse'
+
+  /devices/{deviceId}/control:
+    post:
+      tags: [Device]
+      summary: 发送设备控制指令
+      description: 向指定设备发送控制指令（异步执行）
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: deviceId
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "actuator_001"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ControlRequest'
+      responses:
+        '200':
+          description: 指令已发送
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ControlResponse'
+
+  # ==================== Data Service ====================
+  /data/upload:
+    post:
+      tags: [Data]
+      summary: 上传传感器数据
+      description: 接收传感器数据并写入时序数据库
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SensorDataRequest'
+      responses:
+        '200':
+          description: 数据保存成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SimpleResponse'
+
+
+  # ==================== AI Service ====================
+  /ai/decision/recommend:
+    get:
+      tags: [AI]
+      summary: 获取 AI 托管建议
+      description: 根据当前环境数据，获取 AI 推荐的操作建议
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DecisionResponse'
+
+  /ai/schedule/tasks:
+    get:
+      tags: [AI]
+      summary: 获取智能排产任务
+      description: 获取 AI 生成的任务列表
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskListResponse'
+
+  # ==================== Vision Service ====================
+  /vision/diagnosis:
+    post:
+      tags: [Vision]
+      summary: 病害识别
+      description: 上传植物图片进行病虫害识别
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DiagnosisRequest'
+      responses:
+        '200':
+          description: 识别成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DiagnosisResponse'
+
+# ==================== Components ====================
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: "在 Header 中携带: Authorization: Bearer <token>"
+
+  schemas:
+    # ========== 通用 ==========
+    BaseResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          description: 业务状态码
+          example: 200
+        msg:
+          type: string
+          description: 提示信息
+          example: "Success"
+
+    ErrorResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            data:
+              type: object
+              nullable: true
+
+    SimpleResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            data:
+              type: string
+              example: "Data saved successfully"
+
+    # ========== Auth ==========
+    LoginRequest:
+      type: object
+      required: [username, password]
+      properties:
+        username:
+          type: string
+          description: 用户名
+          example: "admin"
+        password:
+          type: string
+          description: 密码
+          example: "123456"
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        username:
+          type: string
+          example: "admin"
+        role:
+          type: string
+          enum: [EXPERT, STANDARD, MINIMAL]
+          description: "用户角色：专家/标准/简约"
+        defaultMode:
+          type: string
+          enum: [EXPERT, STANDARD, MINIMAL]
+          description: "默认界面模式"
+        createdAt:
+          type: string
+          format: date-time
+
+    LoginResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                token:
+                  type: string
+                  description: JWT Token（有效期24小时）
+                  example: "eyJhbGciOiJIUzI1NiJ9.eyJyb2xlIjoiRVhQRVJUIn0.xxx"
+                user:
+                  $ref: '#/components/schemas/User'
+
+    # ========== Device ==========
+    Greenhouse:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "gh_001"
+        name:
+          type: string
+          example: "1号温室"
+        crop:
+          type: string
+          description: 种植作物
+          example: "樱桃番茄"
+        status:
+          type: string
+          enum: [NORMAL, WARNING, CRITICAL]
+          example: "NORMAL"
+        healthScore:
+          type: integer
+          description: 健康评分 0-100
+          example: 85
+        location:
+          type: object
+          description: GeoJSON Point
+          properties:
+            type:
+              type: string
+              example: "Point"
+            coordinates:
+              type: array
+              items:
+                type: number
+              example: [116.404, 39.915]
+        createdAt:
+          type: string
+          format: date-time
+
+    Zone:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "zone_001"
+        name:
+          type: string
+          example: "A区 茄果类"
+        greenhouseId:
+          type: string
+          example: "gh_001"
+        cropType:
+          type: string
+          example: "樱桃番茄"
+        status:
+          type: string
+          enum: [HEALTHY, WARNING, CRITICAL]
+
+    Actuator:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "actuator_001"
+        name:
+          type: string
+          example: "1号风机"
+        zoneId:
+          type: string
+          example: "zone_001"
+        type:
+          type: string
+          enum: [FAN, LIGHT, PUMP, HEATER]
+          description: "设备类型：风机/补光灯/水泵/加热器"
+        currentValue:
+          type: string
+          description: "当前状态值"
+          example: "ON"
+        autoMode:
+          type: boolean
+          description: "是否自动托管"
+          example: true
+
+    GreenhouseListResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/Greenhouse'
+
+    ZoneWithDevices:
+      type: object
+      properties:
+        zone:
+          $ref: '#/components/schemas/Zone'
+        devices:
+          type: array
+          items:
+            $ref: '#/components/schemas/Actuator'
+
+    GreenhouseDetail:
+      type: object
+      properties:
+        info:
+          $ref: '#/components/schemas/Greenhouse'
+        zones:
+          type: array
+          items:
+            $ref: '#/components/schemas/ZoneWithDevices'
+
+    GreenhouseDetailResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/GreenhouseDetail'
+
+    ControlRequest:
+      type: object
+      required: [action]
+      properties:
+        mode:
+          type: string
+          description: "控制模式"
+          example: "MANUAL"
+        action:
+          type: string
+          enum: [IRRIGATION, VENTILATION, LIGHTING, HEATING]
+          description: "操作类型：灌溉/通风/补光/加热"
+          example: "IRRIGATION"
+        duration:
+          type: integer
+          description: "持续时间（秒）"
+          example: 300
+
+    ControlResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            data:
+              type: string
+              example: "指令已发送"
+
+    # ========== Data ==========
+    SensorDataRequest:
+      type: object
+      required: [greenhouseId, temperature, humidity]
+      properties:
+        greenhouseId:
+          type: string
+          example: "gh_001"
+        temperature:
+          type: number
+          format: double
+          description: "温度（℃）"
+          example: 25.5
+        humidity:
+          type: number
+          format: double
+          description: "湿度（%）"
+          example: 60.0
+
+    # ========== AI ==========
+    Decision:
+      type: object
+      properties:
+        action:
+          type: string
+          enum: [IRRIGATION, VENTILATION, LIGHTING, HEATING]
+          description: "建议动作"
+          example: "IRRIGATION"
+        reason:
+          type: string
+          description: "决策原因"
+          example: "检测到土壤含水量(28%)低于设定阈值(30%)，且未来2小时无降雨"
+        confidence:
+          type: number
+          format: double
+          description: "置信度 0-1"
+          example: 0.92
+
+    DecisionResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/Decision'
+
+    AiTask:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "task_01"
+        type:
+          type: string
+          enum: [irrigation, fertilizer, ventilation, lighting]
+          description: "任务类型"
+        status:
+          type: string
+          enum: [pending, completed, failed]
+          description: "任务状态"
+        aiConfidence:
+          type: number
+          format: double
+          description: "AI 置信度"
+          example: 0.88
+
+    TaskListResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/AiTask'
+
+    # ========== Vision ==========
+    DiagnosisRequest:
+      type: object
+      required: [imageUrl]
+      properties:
+        imageUrl:
+          type: string
+          format: uri
+          description: "图片 URL（上传后获得）"
+          example: "https://oss.smartgreenhouse.com/images/plant_001.jpg"
+
+    Diagnosis:
+      type: object
+      properties:
+        condition:
+          type: string
+          enum: [healthy, pest, disease]
+          description: "健康状态"
+          example: "pest"
+        disease:
+          type: string
+          description: "病害名称"
+          example: "红蜘蛛 (Spider Mite)"
+        confidence:
+          type: number
+          format: double
+          description: "置信度"
+          example: 0.96
+        treatment:
+          type: array
+          items:
+            type: string
+          description: "建议措施"
+          example: ["增加环境湿度", "使用捕食螨进行生物防治", "喷洒矿物油"]
+
+    DiagnosisResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/Diagnosis'

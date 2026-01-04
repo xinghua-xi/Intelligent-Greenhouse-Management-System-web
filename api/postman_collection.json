@@ -1,0 +1,200 @@
+{
+  "info": {
+    "name": "智慧温室 API",
+    "description": "智慧温室微服务系统 API 集合",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "登录",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.code === 200 && jsonData.data.token) {",
+                  "    pm.collectionVariables.set('token', jsonData.data.token);",
+                  "    console.log('Token 已自动保存');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"123456\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "用户登录，获取 JWT Token（自动保存到变量）"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Device",
+      "item": [
+        {
+          "name": "获取大棚列表",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/devices/greenhouses",
+              "host": ["{{baseUrl}}"],
+              "path": ["devices", "greenhouses"]
+            }
+          }
+        },
+        {
+          "name": "获取大棚详情",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/devices/greenhouses/gh_001/detail",
+              "host": ["{{baseUrl}}"],
+              "path": ["devices", "greenhouses", "gh_001", "detail"]
+            }
+          }
+        },
+        {
+          "name": "发送控制指令",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mode\": \"MANUAL\",\n  \"action\": \"IRRIGATION\",\n  \"duration\": 300\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/devices/actuator_001/control",
+              "host": ["{{baseUrl}}"],
+              "path": ["devices", "actuator_001", "control"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Data",
+      "item": [
+        {
+          "name": "上传传感器数据",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"greenhouseId\": \"gh_001\",\n  \"temperature\": 25.5,\n  \"humidity\": 60.0\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/data/upload",
+              "host": ["{{baseUrl}}"],
+              "path": ["data", "upload"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "AI",
+      "item": [
+        {
+          "name": "获取 AI 托管建议",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/ai/decision/recommend",
+              "host": ["{{baseUrl}}"],
+              "path": ["ai", "decision", "recommend"]
+            }
+          }
+        },
+        {
+          "name": "获取智能排产任务",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/ai/schedule/tasks",
+              "host": ["{{baseUrl}}"],
+              "path": ["ai", "schedule", "tasks"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Vision",
+      "item": [
+        {
+          "name": "病害识别",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"imageUrl\": \"https://oss.smartgreenhouse.com/images/plant_001.jpg\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/vision/diagnosis",
+              "host": ["{{baseUrl}}"],
+              "path": ["vision", "diagnosis"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
